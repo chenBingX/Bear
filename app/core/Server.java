@@ -13,17 +13,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Server {
 
-    private static final int PORT = 8839;
+    private int PORT = 8839;
 
     private AtomicInteger count = new AtomicInteger();
     private ServerSocket ss;
 
-    private Server() {
+    private Server(int port) {
+        PORT = port;
     }
 
-
-    public static Server newInstance() {
-        return new Server();
+    public static Server newInstance(int port) {
+        return new Server(port);
     }
 
     public void start(String clientClazz) {

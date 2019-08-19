@@ -18,7 +18,7 @@ import core.ServerChecker;
 
 public class MainServer {
     public static void main(String[] args) {
-        Server server = Server.newInstance();
+        Server server = Server.newInstance(8839);
         server.start(BearClient.class.getName());
         System.out.println("core.Server 启动");
 
