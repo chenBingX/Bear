@@ -25,9 +25,9 @@ public class ClientWindow extends Application{
 
 }
 class TestClient {
-    private static final int TCP_PORT = 8838;
+    private static final int TCP_PORT = 8837;
 //    private static final String IP = "182.254.136.123";
-    private static final String IP = "30.25.58.100";
+    private static final String IP = "30.25.58.66";
     //private static final String IP = "127.0.0.1";
 
     private static final TestClient client = new TestClient();

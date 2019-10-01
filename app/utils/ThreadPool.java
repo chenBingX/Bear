@@ -1,8 +1,6 @@
 package utils;
 
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * 
@@ -11,10 +9,11 @@ import java.util.concurrent.TimeUnit;
 public class ThreadPool {
 
     private ScheduledExecutorService threadPool;
+    private ScheduledThreadPoolExecutor globleExecutor;
 
     private ThreadPool(){
         threadPool = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors() * 2);
-        //threadPool = Executors.newSingleThreadScheduledExecutor();
+        globleExecutor = new ScheduledThreadPoolExecutor(1, new ThreadPoolExecutor.DiscardPolicy());
     }
 
     private static final class Holder{
@@ -35,5 +34,13 @@ public class ThreadPool {
 
     public static void runDelay(Runnable r, long delay){
         get().threadPool.schedule(r, delay, TimeUnit.MILLISECONDS);
+    }
+
+    public static void postDelay(Runnable r, long delay){
+        get().globleExecutor.schedule(r, delay, TimeUnit.MILLISECONDS);
+    }
+
+    public static void remove(Runnable task){
+        get().globleExecutor.remove(task);
     }
 }

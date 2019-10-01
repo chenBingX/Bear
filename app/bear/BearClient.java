@@ -1,8 +1,8 @@
 package bear;
 
 
+import artist.*;
 import com.google.gson.JsonObject;
-import com.sun.javafx.binding.StringFormatter;
 import core.Code;
 import core.UserClient;
 import utils.GsonUtils;
@@ -13,25 +13,25 @@ import utils.TextUtils;
 import javax.imageio.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.awt.image.ColorModel;
 import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.Locale;
 import java.util.Random;
 
 
 public class BearClient extends UserClient {
 
+    private PhoneLayout phoneLayout;
     private Graphics2D surface;
     private BufferedImage image;
     private int count;
     private boolean work;
+    private Random random = new Random();
 
     private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss:SSS");
+    private Context context;
 
     public BearClient(Socket socket) {
         super(socket);
@@ -75,11 +75,14 @@ public class BearClient extends UserClient {
             } else if (TextUtils.equals(type, "init")) {
                 /* 获取 设备信息 -> 初始化 Surface */
                 handleInit(clientData);
-                needFlush = true;
+                /**
+                 *
+                 */
+                needFlush = false;
             } else if (TextUtils.equals(type, "touch")) {
                 // 处理触摸事件
                 handleTouch(clientData);
-                needFlush = true;
+                needFlush = false;
             }
         } else {
             LogUtils.e("信息格式错误！userName：" + key + "，ip：" + getIp());
@@ -108,38 +111,70 @@ public class BearClient extends UserClient {
             }
             float x = GsonUtils.getFloat(data, "x");
             float y = GsonUtils.getFloat(data, "y");
-            drawPoint(x, y);
+//            drawPoint(x, y);
+            phoneLayout.dispatchTouchEvent(MotionEvent.build(action,x,y));
         } else {
             LogUtils.e("信息格式错误！\n" + data.toString());
         }
     }
 
-    private Random random = new Random();
-    private void drawPoint(float x, float y) {
-        System.out.println("当前绘制点数：" + touchCount + "个");
-        surface.setPaint(new Color(random.nextInt(255), random.nextInt(255), random.nextInt(255)));
-        surface.fillOval((int) x, (int) y, 15, 15);
-    }
-
-    private void initSurface(int w, int h) {
-        if (!(w > 0 && h > 0)) return;
-        image = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-        surface = image.createGraphics();
-        surface.setColor(Color.BLACK);
-    }
-
     private void handleInit(JsonObject data) {
         if (data.has("w") && data.has("h")) {
-            initSurface(GsonUtils.getInt(data, "w"), GsonUtils.getInt(data, "h"));
+            initSurface(GsonUtils.getInt(data, "w")
+                    , GsonUtils.getInt(data, "h")
+                    , GsonUtils.getFloat(data, "density")
+                    , GsonUtils.getFloat(data, "scaledDensity"));
+            buildPage();
         } else {
             LogUtils.e("信息格式错误！\n" + data.toString());
             SocketUtils.sendData(outputStream, String.format("{errCode:%d}", Code.INIT_FAILURE).getBytes());
         }
     }
 
+    private void initSurface(int w, int h, float density, float scaledDensity) {
+        if (!(w > 0 && h > 0)) return;
+        context = new Context(() -> flush());
+        phoneLayout = new PhoneLayout(context);
+        phoneLayout.setBackground(Color.BLACK);
+        phoneLayout.setBounds(0, 0, w, h);
+        context.setPhoneLayout(phoneLayout);
+        context.setDensity(density);
+        context.setScaledDensity(scaledDensity);
+
+        image = new BufferedImage(phoneLayout.getWidth(), phoneLayout.getHeight(), BufferedImage.TYPE_INT_RGB);
+        surface = image.createGraphics();
+    }
+
+    private void buildPage() {
+        ArtistLayout artistLayout = new ArtistLayout(phoneLayout.getContext());
+        phoneLayout.add(artistLayout);
+        artistLayout.setRoot(phoneLayout);
+        artistLayout.setBackground(Color.decode("#03DAC6"));
+
+        ArtText artText = new ArtText(artistLayout.getContext());
+        artText.setWidth(500);
+        artText.setHeight(200);
+        artText.setPadding((int) context.dp(10));
+        artText.setText("Hello World！");
+        artText.setGravity(Gravity.CENTER);
+        artText.setLayoutGravity(Gravity.CENTER);
+        artText.setTextColor(Color.BLACK);
+        artText.setTextSize(context.dp(22));
+        artText.setBackgroundColor(Color.WHITE);
+        artistLayout.addView(artText);
+
+        artText.setOnClickListener(artView -> {
+            LogUtils.e("文字颜色变更");
+            artText.setTextColor(new Color(random.nextInt(255), random.nextInt(255), random.nextInt(255)));
+        });
+
+
+    }
+
     private void flush() {
         try {
             if (image != null) {
+                phoneLayout.paintComponent(surface);
                 ImageIO.write(image, "png", outputStream);
                 File file = new File("/Users/coorchice/VSProjects/Bear/img");
                 if (!file.exists()) file.mkdir();

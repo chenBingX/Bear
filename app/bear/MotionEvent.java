@@ -12,4 +12,33 @@ public class MotionEvent {
     public float y;
 
 
+
+    public static MotionEvent build(int action, float x, float y){
+        MotionEvent motionEvent = new MotionEvent();
+        motionEvent.action = action;
+        motionEvent.x = x;
+        motionEvent.y = y;
+        return motionEvent;
+    }
+
+    public int getAction() {
+        return action;
+    }
+
+    public float getX() {
+        return x;
+    }
+
+    public float getY() {
+        return y;
+    }
+
+    public void setAction(int action) {
+        this.action = action;
+    }
+
+    public void setLocation(int x, int y) {
+        this.x = x;
+        this.y = y;
+    }
 }
