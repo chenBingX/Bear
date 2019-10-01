@@ -5,6 +5,7 @@ import artist.*;
 import com.google.gson.JsonObject;
 import core.Code;
 import core.UserClient;
+import javafx.scene.web.WebView;
 import utils.GsonUtils;
 import utils.LogUtils;
 import utils.SocketUtils;
